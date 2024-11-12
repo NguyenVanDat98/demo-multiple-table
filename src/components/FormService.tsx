@@ -2,8 +2,8 @@ import { DeleteOutlined } from "@ant-design/icons";
 import { Button, Col, Input, Row, Select, Table, TableProps } from "antd";
 import ConfigProvider from "antd/es/config-provider";
 import { BaseOptionType } from "antd/es/select";
-import { defaultTo, get, uniqBy } from "lodash";
-import React, { useState } from "react";
+import { debounce, deburr, defaultTo, get, set, uniqBy } from "lodash";
+import React, { memo, useCallback, useState } from "react";
 import services from "../assets/services.json";
 type propsType = {};
 type DataType = (typeof services)[number];
@@ -24,10 +24,75 @@ const rowSelection = (
     id: record._id,
   }),
 });
+
+const deburrSlug = (value: string) => {
+  return deburr(value)
+    .toLowerCase()
+    .replace(/[ắăằâấầậẫẵặẳẩ]/gi, "a")
+    .replace(/[ưựữửụũủùú]/gi, "u")
+    .replace(/[êệễểẹẽẻ]/gi, "e")
+    .replace(/[ọõỏòõộ]/gi, "o");
+};
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let time: any;
+
 export default function FormService(props: propsType): React.JSX.Element {
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
-  const [filterNotChoose,setFilterNotChoose] = useState<string|null>(null)
-  const [filterChoose,setFilterChoose] = useState<string|null>(null)
+
+  const [filterNotChoose, setFilterNotChoose] = useState<string | null>(null);
+  const [filterChoose, setFilterChoose] = useState<string | null>(null);
+
+  const [valueSearchNotChoose, setValueSearchNotChoose] = useState("");
+  const [valueSearchChoose, setValueSearchChoose] = useState("");
+
+  const [servicesNotChoose, setServicesNotChoose] =
+    useState<typeof services>(services);
+  const [servicesChoose, setServicesChoose] = useState<typeof services>([]);
+
+  const onSearch = useCallback(
+    (
+      setData: typeof setServicesNotChoose,
+      init: typeof services = [],
+      setValue: (value: string) => void
+    ) => {
+      return (value: string) => {
+        setValue(value);
+        if (time) {
+          clearTimeout(time);
+        }
+        try {
+          if (!value) {
+            setData(init);
+          } else {
+            time = setTimeout(() => {
+              const data = [...services].filter(({ name, code }) => {
+                const regex = new RegExp(deburrSlug(value), "ig");
+                const regexCode = new RegExp(deburrSlug(code), "ig");
+                const regexValue = new RegExp(deburrSlug(value), "ig");
+                return (
+                  regex.test(deburrSlug(name.vi)) ||
+                  regexCode.test(deburrSlug(value)) ||
+                  regexValue.test(deburrSlug(code))
+                );
+              });
+              setData(data);
+            }, 850);
+          }
+        } catch (error) {
+          console.error(error);
+        }
+      };
+    },
+    []
+  );
+  const onSearchChoose = useCallback(
+    () => onSearch(setServicesChoose, [], setValueSearchChoose),
+    [onSearch]
+  );
+  const onSearchNotChoose = useCallback(
+    () => onSearch(setServicesNotChoose, services, setValueSearchNotChoose),
+    [onSearch]
+  );
 
   return (
     <Row style={{ width: "100%" }} gutter={10}>
@@ -44,9 +109,10 @@ export default function FormService(props: propsType): React.JSX.Element {
         <Col span={12} style={{ borderRight: "3px #333 solid" }}>
           <Table
             size="small"
-            dataSource={services.filter(({category})=>filterNotChoose?category._id===filterNotChoose:true)}
+            dataSource={servicesNotChoose.filter(({ category }) =>
+              filterNotChoose ? category._id === filterNotChoose : true
+            )}
             rowKey={({ _id }) => _id}
-            
             rowSelection={{
               type: "checkbox",
               ...rowSelection(setSelectedRowKeys, selectedRowKeys),
@@ -76,8 +142,16 @@ export default function FormService(props: propsType): React.JSX.Element {
               <TitleAndSearch
                 onSelect={setFilterNotChoose}
                 value={filterNotChoose}
-                options={ uniqBy(services.map(({category})=>({label:category.name?.vi,value:category._id})),'value') }
+                options={uniqBy(
+                  services.map(({ category }) => ({
+                    label: category.name?.vi,
+                    value: category._id,
+                  })),
+                  "value"
+                )}
                 title="Chưa chọn"
+                onChangeValueSearch={onSearchNotChoose()}
+                searchValue={valueSearchNotChoose}
                 placeholder="Tìm trong chưa chọn"
               />
             )}
@@ -85,15 +159,25 @@ export default function FormService(props: propsType): React.JSX.Element {
         </Col>
         <Col span={12}>
           <Table
-            dataSource={services.filter(({ _id,category }) =>
-              selectedRowKeys.includes(_id) &&(filterChoose?category._id===filterChoose:true)
+            dataSource={servicesChoose.filter(
+              ({ _id, category }) =>
+                selectedRowKeys.includes(_id) &&
+                (filterChoose ? category._id === filterChoose : true)
             )}
             size="small"
             title={() => (
               <TitleAndSearch
-              onSelect={setFilterChoose}
-              value={filterChoose}
-              options={ uniqBy(services.map(({category})=>({label:category.name?.vi,value:category._id})),'value') }
+                onSelect={setFilterChoose}
+                onChangeValueSearch={onSearchChoose()}
+                searchValue={valueSearchChoose}
+                value={filterChoose}
+                options={uniqBy(
+                  services.map(({ category }) => ({
+                    label: category.name?.vi,
+                    value: category._id,
+                  })),
+                  "value"
+                )}
                 title="Đã chọn"
                 placeholder="Tìm trong chưa chọn"
               />
@@ -115,7 +199,13 @@ export default function FormService(props: propsType): React.JSX.Element {
                 title: () => (
                   <Button
                     onClick={() => {
-                      setSelectedRowKeys(services.filter(({ _id,category }) => (filterChoose?category._id!==filterChoose:false)).map(({_id})=>_id));
+                      setSelectedRowKeys(
+                        services
+                          .filter(({ _id, category }) =>
+                            filterChoose ? category._id !== filterChoose : false
+                          )
+                          .map(({ _id }) => _id)
+                      );
                     }}
                     size="small"
                     danger
@@ -171,37 +261,56 @@ export default function FormService(props: propsType): React.JSX.Element {
       }
     </Row>
   );
-
-  function TitleAndSearch({
-    title,
-    placeholder,
-    options,
-    onSelect,
-    value
-  }: {
-    title: string;
-    options?: BaseOptionType[];
-    placeholder: string;
-    onSelect?:(id:string|null)=>void;
-    value?: string|null;
-  }) {
-    return (
-      <Row
-        gutter={10}
-        justify={"space-between"}
-        style={{ width: "100%", paddingRight: 0 }}
-      >
-        <Col flex={1}>{title}</Col>
-        {options?.length && (
-            <Col style={{minWidth:100 ,display:'flex'}}>
-                <Select style={{width:'100%'}} onClear={()=>onSelect!(null)} allowClear onSelect={onSelect} size="small" value={value} options={options??[]} popupMatchSelectWidth={false} />
-            </Col>
-        )}
-
-        <Col style={{ paddingRight: 0 }}>
-          <Input.Search  size="small" placeholder={placeholder} enterButton />
-        </Col>
-      </Row>
-    );
-  }
 }
+const TitleAndSearch = memo(function ({
+  title,
+  placeholder,
+  options,
+  onSelect,
+  value,
+  onChangeValueSearch,
+  searchValue,
+}: {
+  searchValue?: string;
+  onChangeValueSearch?: (value: string) => unknown;
+  title: string;
+  options?: BaseOptionType[];
+  placeholder: string;
+  onSelect?: (id: string | null) => void;
+  value?: string | null;
+}) {
+  return (
+    <Row
+      gutter={10}
+      justify={"space-between"}
+      style={{ width: "100%", paddingRight: 0 }}
+    >
+      <Col flex={1}>{title}</Col>
+      {options?.length && (
+        <Col style={{ minWidth: 100, display: "flex" }}>
+          <Select
+            style={{ width: "100%" }}
+            onClear={() => onSelect!(null)}
+            allowClear
+            onSelect={onSelect}
+            size="small"
+            value={value}
+            options={options ?? []}
+            popupMatchSelectWidth={false}
+          />
+        </Col>
+      )}
+
+      <Col style={{ paddingRight: 0 }}>
+        <Input.Search
+          allowClear
+          onChange={(e) => onChangeValueSearch!(e.target.value as string)}
+          defaultValue={searchValue}
+          size="small"
+          placeholder={placeholder}
+          enterButton
+        />
+      </Col>
+    </Row>
+  );
+});
