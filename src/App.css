@@ -1,0 +1,10 @@
+#root {
+  max-width: 1280px;
+  margin: 0 auto;
+  text-align: center;
+    place-items: center;
+}
+* {
+  box-sizing: border-box;
+  object-fit: contain;
+}
