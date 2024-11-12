@@ -2,7 +2,7 @@ import { DeleteOutlined } from "@ant-design/icons";
 import { Button, Col, Input, Row, Select, Table, TableProps } from "antd";
 import ConfigProvider from "antd/es/config-provider";
 import { BaseOptionType } from "antd/es/select";
-import { defaultTo, get } from "lodash";
+import { defaultTo, get, uniqBy } from "lodash";
 import React, { useState } from "react";
 import services from "../assets/services.json";
 type propsType = {};
@@ -26,6 +26,8 @@ const rowSelection = (
 });
 export default function FormService(props: propsType): React.JSX.Element {
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
+  const [filterNotChoose,setFilterNotChoose] = useState<string|null>(null)
+  const [filterChoose,setFilterChoose] = useState<string|null>(null)
 
   return (
     <Row style={{ width: "100%" }} gutter={10}>
@@ -42,8 +44,9 @@ export default function FormService(props: propsType): React.JSX.Element {
         <Col span={12} style={{ borderRight: "3px #333 solid" }}>
           <Table
             size="small"
-            dataSource={services}
+            dataSource={services.filter(({category})=>filterNotChoose?category._id===filterNotChoose:true)}
             rowKey={({ _id }) => _id}
+            
             rowSelection={{
               type: "checkbox",
               ...rowSelection(setSelectedRowKeys, selectedRowKeys),
@@ -71,6 +74,9 @@ export default function FormService(props: propsType): React.JSX.Element {
             ]}
             title={() => (
               <TitleAndSearch
+                onSelect={setFilterNotChoose}
+                value={filterNotChoose}
+                options={ uniqBy(services.map(({category})=>({label:category.name?.vi,value:category._id})),'value') }
                 title="Chưa chọn"
                 placeholder="Tìm trong chưa chọn"
               />
@@ -79,13 +85,16 @@ export default function FormService(props: propsType): React.JSX.Element {
         </Col>
         <Col span={12}>
           <Table
-            dataSource={services.filter(({ _id }) =>
-              selectedRowKeys.includes(_id)
+            dataSource={services.filter(({ _id,category }) =>
+              selectedRowKeys.includes(_id) &&(filterChoose?category._id===filterChoose:true)
             )}
             size="small"
             title={() => (
               <TitleAndSearch
-                title="Dã chọn"
+              onSelect={setFilterChoose}
+              value={filterChoose}
+              options={ uniqBy(services.map(({category})=>({label:category.name?.vi,value:category._id})),'value') }
+                title="Đã chọn"
                 placeholder="Tìm trong chưa chọn"
               />
             )}
@@ -106,12 +115,11 @@ export default function FormService(props: propsType): React.JSX.Element {
                 title: () => (
                   <Button
                     onClick={() => {
-                      setSelectedRowKeys([]);
+                      setSelectedRowKeys(services.filter(({ _id,category }) => (filterChoose?category._id!==filterChoose:true)).map(({_id})=>_id));
                     }}
                     size="small"
                     danger
                   >
-                    {" "}
                     Xoá hết
                   </Button>
                 ),
@@ -168,10 +176,14 @@ export default function FormService(props: propsType): React.JSX.Element {
     title,
     placeholder,
     options,
+    onSelect,
+    value
   }: {
     title: string;
     options?: BaseOptionType[];
     placeholder: string;
+    onSelect?:(id:string|null)=>void;
+    value?: string|null;
   }) {
     return (
       <Row
@@ -181,11 +193,13 @@ export default function FormService(props: propsType): React.JSX.Element {
       >
         <Col flex={1}>{title}</Col>
         {options?.length && (
-          <Select size="small" options={[]} popupMatchSelectWidth={false} />
+            <Col style={{minWidth:100 ,display:'flex'}}>
+                <Select style={{width:'100%'}} onClear={()=>onSelect!(null)} allowClear onSelect={onSelect} size="small" value={value} options={options??[]} popupMatchSelectWidth={false} />
+            </Col>
         )}
 
         <Col style={{ paddingRight: 0 }}>
-          <Input.Search size="small" placeholder={placeholder} enterButton />
+          <Input.Search  size="small" placeholder={placeholder} enterButton />
         </Col>
       </Row>
     );
