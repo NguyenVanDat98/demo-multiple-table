@@ -115,7 +115,7 @@ export default function FormService(props: propsType): React.JSX.Element {
                 title: () => (
                   <Button
                     onClick={() => {
-                      setSelectedRowKeys(services.filter(({ _id,category }) => (filterChoose?category._id!==filterChoose:true)).map(({_id})=>_id));
+                      setSelectedRowKeys(services.filter(({ _id,category }) => (filterChoose?category._id!==filterChoose:false)).map(({_id})=>_id));
                     }}
                     size="small"
                     danger
