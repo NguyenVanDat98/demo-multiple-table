@@ -2,20 +2,23 @@ import { DeleteOutlined } from "@ant-design/icons";
 import { Button, Col, Input, Row, Select, Table, TableProps } from "antd";
 import ConfigProvider from "antd/es/config-provider";
 import { BaseOptionType } from "antd/es/select";
-import { debounce, deburr, defaultTo, get, set, uniqBy } from "lodash";
-import React, { memo, useCallback, useState } from "react";
+import { debounce, deburr, defaultTo, get, set, uniq, uniqBy } from "lodash";
+import React, { memo, PropsWithChildren, useCallback, useState } from "react";
 import services from "../assets/services.json";
 type propsType = {};
 type DataType = (typeof services)[number];
 
+const categories = uniqBy(
+  services.map(({ category }) => ({
+    label: category.name?.vi,
+    value: category._id,
+  })),
+  "value"
+);
 // const
 const rowSelection = (
-  setSelectedRowKeys: React.Dispatch<React.SetStateAction<React.Key[]>>,
   selectedRowKeys: React.Key[]
 ): TableProps<DataType>["rowSelection"] => ({
-  onChange: (selectedRowKeys: React.Key[], selectedRows: DataType[]) => {
-    setSelectedRowKeys(selectedRowKeys);
-  },
   selectedRowKeys: selectedRowKeys?.length ? selectedRowKeys : [],
   defaultSelectedRowKeys: selectedRowKeys?.length ? selectedRowKeys : [],
 
@@ -47,7 +50,7 @@ export default function FormService(props: propsType): React.JSX.Element {
 
   const [servicesNotChoose, setServicesNotChoose] =
     useState<typeof services>(services);
-  const [servicesChoose, setServicesChoose] = useState<typeof services>([]);
+  const [servicesChoose, setServicesChoose] = useState<typeof services>(services.filter(({_id})=>selectedRowKeys.includes(_id)));
 
   const onSearch = useCallback(
     (
@@ -86,8 +89,8 @@ export default function FormService(props: propsType): React.JSX.Element {
     []
   );
   const onSearchChoose = useCallback(
-    () => onSearch(setServicesChoose, [], setValueSearchChoose),
-    [onSearch]
+    () => onSearch(setServicesChoose,services.filter(({_id})=>selectedRowKeys.includes(_id)) , setValueSearchChoose),
+    [onSearch,selectedRowKeys]
   );
   const onSearchNotChoose = useCallback(
     () => onSearch(setServicesNotChoose, services, setValueSearchNotChoose),
@@ -107,17 +110,25 @@ export default function FormService(props: propsType): React.JSX.Element {
         }}
       >
         <Col span={12} style={{ borderRight: "3px #333 solid" }}>
-          <Table
-            size="small"
-            dataSource={servicesNotChoose.filter(({ category }) =>
+          <TableRender
+            dataSource={servicesNotChoose}
+            filterData={({ category }) =>
               filterNotChoose ? category._id === filterNotChoose : true
-            )}
-            rowKey={({ _id }) => _id}
+            }
             rowSelection={{
               type: "checkbox",
-              ...rowSelection(setSelectedRowKeys, selectedRowKeys),
+              onChange(keys){
+                
+                if(filterNotChoose){
+                  setSelectedRowKeys((old)=>uniq([...old,...keys]))
+                  setServicesChoose(services.filter(({_id})=>([...selectedRowKeys, ...(keys as string[])]).includes(_id)))
+                }else {
+                  setSelectedRowKeys(keys)
+                  setServicesChoose(services.filter(({_id})=>(keys as string[]).includes(_id)))
+                }
+              },
+              ...rowSelection(selectedRowKeys),
             }}
-            scroll={{ y: "60vh" }}
             columns={[
               {
                 key: "code",
@@ -142,76 +153,48 @@ export default function FormService(props: propsType): React.JSX.Element {
               <TitleAndSearch
                 onSelect={setFilterNotChoose}
                 value={filterNotChoose}
-                options={uniqBy(
-                  services.map(({ category }) => ({
-                    label: category.name?.vi,
-                    value: category._id,
-                  })),
-                  "value"
-                )}
+                options={categories}
                 title="Chưa chọn"
                 onChangeValueSearch={onSearchNotChoose()}
                 searchValue={valueSearchNotChoose}
                 placeholder="Tìm trong chưa chọn"
               />
             )}
-          ></Table>
+          />
         </Col>
         <Col span={12}>
-          <Table
-            dataSource={servicesChoose.filter(
-              ({ _id, category }) =>
-                selectedRowKeys.includes(_id) &&
-                (filterChoose ? category._id === filterChoose : true)
-            )}
-            size="small"
-            title={() => (
-              <TitleAndSearch
-                onSelect={setFilterChoose}
-                onChangeValueSearch={onSearchChoose()}
-                searchValue={valueSearchChoose}
-                value={filterChoose}
-                options={uniqBy(
-                  services.map(({ category }) => ({
-                    label: category.name?.vi,
-                    value: category._id,
-                  })),
-                  "value"
-                )}
-                title="Đã chọn"
-                placeholder="Tìm trong chưa chọn"
-              />
-            )}
-            sticky={{ offsetHeader: 0 }}
-            footer={() => <div></div>}
-            rowKey={({ _id }) => _id}
-            pagination={false}
+          <TableRender
             summary={() => (
               <Table.Summary fixed={"bottom"}>
                 <Table.Summary.Cell index={0} colSpan={3}>
                   Tổng: {selectedRowKeys.length}
                 </Table.Summary.Cell>
               </Table.Summary>
-            )}
-            scroll={{ y: "60vh" }}
+              )}
+
+            dataSource={servicesChoose}
+            filterData={({ _id, category }) =>
+              selectedRowKeys.includes(_id) &&
+              (filterChoose ? category._id === filterChoose : true)
+            }
             columns={[
               {
                 title: () => (
                   <Button
-                    onClick={() => {
-                      setSelectedRowKeys(
-                        services
-                          .filter(({ _id, category }) =>
-                            filterChoose ? category._id !== filterChoose : false
-                          )
-                          .map(({ _id }) => _id)
-                      );
-                    }}
-                    size="small"
-                    danger
-                  >
-                    Xoá hết
-                  </Button>
+                  onClick={() => {
+                    setSelectedRowKeys(
+                      services
+                        .filter(({ _id, category }) =>
+                          filterChoose ? category._id !== filterChoose : false
+                        )
+                        .map(({ _id }) => _id)
+                    );
+                  }}
+                  size="small"
+                  danger
+                >
+                  Xoá hết
+                </Button>
                 ),
                 colSpan: 1,
                 dataIndex: "_id",
@@ -253,15 +236,57 @@ export default function FormService(props: propsType): React.JSX.Element {
                 },
               },
             ]}
-          ></Table>
+
+            title={() => (
+              <TitleAndSearch
+                onSelect={setFilterChoose}
+                onChangeValueSearch={onSearchChoose()}
+                searchValue={valueSearchChoose}
+                value={filterChoose}
+                options={categories}
+                title="Đã chọn"
+                placeholder="Tìm trong chưa chọn"
+              />
+            )}
+          />
         </Col>
       </ConfigProvider>
-      {
-        // range(100).map((e,i)=><p key={i}>FormService</p>)
-      }
     </Row>
   );
 }
+
+type ExtralTable = {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  filterData?: (item: (typeof services)[number]) => boolean;
+  dataSource: typeof services;
+};
+
+
+
+const TableInitProps: Partial<TableProps<DataType>> = {
+  size: "small",
+  scroll: { y: "60vh" },
+  rowKey: '_id',
+  pagination: false,
+  sticky: { offsetHeader: 0 },
+};
+const TableRender = memo(
+  (
+    props: PropsWithChildren<TableProps<DataType> & ExtralTable>
+  ) => {
+    return (
+      <Table
+        {...{
+          ...TableInitProps,
+          ...props,
+          dataSource: props.dataSource?.filter(
+            props?.filterData ?? (() => true)
+          ),
+        }}
+      />
+    );
+  }
+);
 const TitleAndSearch = memo(function ({
   title,
   placeholder,
