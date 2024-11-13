@@ -1,5 +1,5 @@
 import { DeleteOutlined } from "@ant-design/icons";
-import { Button, Col, Input, Row, Select, Table, TableProps } from "antd";
+import { Button, Col, Input, Row, Select, Table, TableProps, Tag } from "antd";
 import ConfigProvider from "antd/es/config-provider";
 import { BaseOptionType } from "antd/es/select";
 import { debounce, deburr, defaultTo, get, set, uniq, uniqBy } from "lodash";
@@ -164,14 +164,6 @@ export default function FormService(props: propsType): React.JSX.Element {
         </Col>
         <Col span={12}>
           <TableRender
-            summary={() => (
-              <Table.Summary fixed={"bottom"}>
-                <Table.Summary.Cell index={0} colSpan={3}>
-                  Tổng: {selectedRowKeys.length}
-                </Table.Summary.Cell>
-              </Table.Summary>
-              )}
-
             dataSource={servicesChoose}
             filterData={({ _id, category }) =>
               selectedRowKeys.includes(_id) &&
@@ -179,8 +171,11 @@ export default function FormService(props: propsType): React.JSX.Element {
             }
             columns={[
               {
-                title: () => (
-                  <Button
+                title: () => {
+                  const count = servicesChoose.filter(({ _id, category }) =>
+                    selectedRowKeys.includes(_id) &&
+                    (filterChoose ? category._id === filterChoose : true)).length
+                  return <Button
                   onClick={() => {
                     setSelectedRowKeys(
                       services
@@ -193,13 +188,13 @@ export default function FormService(props: propsType): React.JSX.Element {
                   size="small"
                   danger
                 >
-                  Xoá hết
+                  Gỡ {Boolean(count) &&<Tag color="red" style={{marginInlineEnd:0,marginRight:-8,paddingInline:10,paddingBlock:1}}>{count}</Tag> }
                 </Button>
-                ),
+                },
                 colSpan: 1,
                 dataIndex: "_id",
                 align: "center",
-                width: "80px",
+                width: "100px",
                 render(id) {
                   return (
                     <Button
@@ -244,7 +239,7 @@ export default function FormService(props: propsType): React.JSX.Element {
                 searchValue={valueSearchChoose}
                 value={filterChoose}
                 options={categories}
-                title="Đã chọn"
+                title={"Đã chọn: "+ selectedRowKeys.length}
                 placeholder="Tìm trong chưa chọn"
               />
             )}
@@ -321,6 +316,7 @@ const TitleAndSearch = memo(function ({
             size="small"
             value={value}
             options={options ?? []}
+            placeholder='Chọn nhóm dịch vụ'
             popupMatchSelectWidth={false}
           />
         </Col>

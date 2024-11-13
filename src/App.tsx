@@ -21,10 +21,14 @@ function App() {
         height={"100%"}
         title={ <HeadModal/>}
         style={{
-          top: "0px",
+          top: "40px",
         }}
         width={1400}
         styles={{
+          wrapper:{
+            height:'100vh',
+            overflowY: 'hidden',
+          },
           content: {
             overflowY: "auto",
             maxHeight: "90vh",
@@ -41,6 +45,7 @@ function App() {
             position: "sticky",
             backgroundColor: "white",
             bottom: "0px",
+            paddingBottom:8
           },
         }}
       >
