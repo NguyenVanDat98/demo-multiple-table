@@ -1,0 +1,1 @@
+export const formatNumber = (value?:number)=>Intl.NumberFormat('vi').format(value??0)
