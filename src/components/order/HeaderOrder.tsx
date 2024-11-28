@@ -61,7 +61,7 @@ export default function HeaderOrder() : React.JSX.Element {
     },[setProducts,setLoading])
     return (
       <Row align={'middle'} justify={'space-between'} style={{ width: "calc(100% + 20px)", ...stypeDiv }}>
-        <Col flex={1} style={{ width: "100%", maxWidth: 500 }}>
+        <Col flex={1} style={{ width: "100%", maxWidth: 600 }}>
         <AutoComplete style={{ width: "100%" }} 
             onSelect={(id,{data})=>{
                 const variant = data.variants.find(({variantIsDefault:e})=>e)
@@ -117,6 +117,8 @@ export default function HeaderOrder() : React.JSX.Element {
                         <LabelAndValue disabled={disabled} value={`[ ${clone.codeBySupplier} ]`} label='Mã'/>
                         <LabelAndValue disabled={disabled} value={formatNumber(variant?.price??0)} strong fontsize={16} label='Giá'/>
                         <LabelAndValue disabled={disabled} value={variant?.unit.name??0} label='Đơn vị'/>
+                        <LabelAndValue disabled={disabled} value={clone?.productGroup.name} label='Nhóm '/>
+                        <LabelAndValue disabled={disabled} value={clone?.supplier.name} label='Nhà cung cấp '/>
                     </Col>
                     <Col style={{width:70,height:'100%',marginBlock:-10 }}>{<Image height={'100%'} src={clone.images[0]} preview={false} loading='lazy'/>}</Col>
                 </Row>
@@ -127,7 +129,7 @@ export default function HeaderOrder() : React.JSX.Element {
     }
     function LabelAndValue(props:Props){
             return <Row style={{width:'100%'}}>
-                {props.label&& <Col span={4}>{props.label}</Col>}
+                {props.label&& <Col style={{width:100}}>{props.label}</Col>}
                 <Col><Divider plain orientation='center' variant='solid' type='vertical'/></Col>
                 <Col flex={1}><Typography.Text disabled={props.disabled} strong={props.strong} style={{fontSize:props.fontsize}}>{props.value}</Typography.Text></Col>
             </Row>

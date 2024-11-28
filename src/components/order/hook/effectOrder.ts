@@ -46,5 +46,8 @@ export const useEffectOrder = () => {
 
         form?.setFieldValue("totalPayment", totalAmount - discountValue );
     }, [discountValue, totalAmount, form]);
-
+    return {
+        totalAmount,
+        discountValue,
+    }
 }

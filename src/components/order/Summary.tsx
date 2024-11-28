@@ -6,9 +6,10 @@ import {
     FormItemProps,
     Input,
     InputNumber,
-    Segmented
+    Segmented,
+    Tooltip
 } from "antd";
-import React, { memo, useState } from "react";
+import React, { memo, PropsWithChildren, useState } from "react";
 import { formatNumber } from "../../util/app";
 import { useEffectOrder } from "./hook/effectOrder";
 import { useOrder } from "./Order.context";
@@ -32,7 +33,10 @@ const itemProps:FormItemProps={
 }
 
 export default memo(function Summary(): React.JSX.Element {
-  useEffectOrder()
+ const {
+    totalAmount,
+    discountValue
+} = useEffectOrder();
 
   return (
     <div style={stypeDiv}>
@@ -51,18 +55,24 @@ export default memo(function Summary(): React.JSX.Element {
         />
       </Form.Item>
       <DiscountComponent />
-      <Form.Item {...itemProps}  label={"Thành tiền"} name={"totalPayment"}>
-        <InputNumber
-          readOnly
-          style={{ width: "100%" }}
-          formatter={formatNumber}
-          variant={"filled"}
-        />
-      </Form.Item>
+    <DetailTotalPayment title={ totalAmount?`Tổng tiền (${formatNumber(totalAmount)}) - Giá trị giảm (${formatNumber(discountValue)})`:'' }>
+        <Form.Item {...itemProps}  label={"Thành tiền"} name={"totalPayment"}>
+            <InputNumber
+            readOnly
+            style={{ width: "100%" }}
+            formatter={formatNumber}
+            variant={"filled"}
+            />
+
+        </Form.Item>
+    </DetailTotalPayment>
 
       <Button type="primary" htmlType="submit">Submit</Button>
     </div>
   );
+  function DetailTotalPayment({children,...props}:PropsWithChildren<{title:any}>){
+    return <Tooltip trigger={'focus'} mouseEnterDelay={1.4} title={props?.title}>{children}</Tooltip>
+  }
 });
 
 const DiscountComponent = memo(function () {
@@ -89,9 +99,6 @@ const DiscountComponent = memo(function () {
       >
         <Input />
       </Form.Item>
-      <Form.Item {...itemProps}  label={"Giá trị giảm"} name={"discountValue"}>
-        <InputNumber style={{width:'100%'}} readOnly variant="filled" formatter={formatNumber} />
-      </Form.Item>
       <Form.Item {...itemProps}  label={"Giảm giá"} name={"discount"} initialValue={0}>
         <InputNumber
           addonAfter={
@@ -108,6 +115,9 @@ const DiscountComponent = memo(function () {
           }}
           variant={"outlined"}
         />
+      </Form.Item>
+      <Form.Item {...itemProps}  label={"Giá trị giảm"} name={"discountValue"}>
+        <InputNumber style={{width:'100%'}} readOnly variant="filled" formatter={formatNumber}  addonAfter={'VNĐ'}/>
       </Form.Item>
     </ConfigProvider>
   );
