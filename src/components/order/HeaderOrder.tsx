@@ -26,20 +26,24 @@ export default function HeaderOrder() : React.JSX.Element {
     const refInputSearch = useRef<InputRef>(null);
     const reftime = useRef<number>(0);
     useEffect(() => {
-        request.searchProducts({keyword: ''}).then(setProducts).catch((error)=>notification.error({message:error?.message})).finally(()=>setLoading(false));
+        request.searchProducts({keyword: ''})
+            .then(setProducts)
+            .catch((error)=>notification.error({message:error?.message}))
+            .finally(()=>setLoading(false));
       
         const handleKeyDown = (event:KeyboardEvent) => {
           if (event.key === '/') {
+
             refInputSearch.current?.focus()
           }
         };
     
-        window.addEventListener('keydown', handleKeyDown);
+        window.addEventListener('keyup', handleKeyDown);
     
         return () => {
           window.removeEventListener('keydown', handleKeyDown);
         };
-      },[setProducts]);
+      },[]);
     const onchange :React.ChangeEventHandler<HTMLInputElement>= useCallback(async(value)=>{
         setLoading(true);
         if(reftime.current){
