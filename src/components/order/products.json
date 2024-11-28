@@ -295,10 +295,10 @@
                     "__v": 0,
                     "id": "61d3cdc4a56ddbde9a0bb796"
                 },
-                "exchangeValue": 1,
+                "exchangeValue": 2,
                 "barcode": "",
                 "cost": 12000,
-                "price": 13000,
+                "price": 24000,
                 "status": "ACTIVE",
                 "createdAt": "2022-08-15T03:39:28.811Z",
                 "updatedAt": "2022-08-15T03:39:28.816Z",

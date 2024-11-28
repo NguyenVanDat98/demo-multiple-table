@@ -4,6 +4,6 @@ import React from 'react';
 
 export default function InputNumberAlign(props:React.PropsWithChildren<InputNumberProps<any>> & React.RefAttributes<HTMLInputElement>) : React.JSX.Element {
     return (
-        <InputNumber className='align-input-number' {...props}/> 
+        <InputNumber className='align-input-number' {...props} parser={(val)=>Number(String(val).replace(/[.,]/ig,''))}/> 
     )
 }

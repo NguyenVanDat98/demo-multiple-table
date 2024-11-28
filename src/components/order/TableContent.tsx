@@ -1,112 +1,119 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Button, Form, Input, Select, Table, TableColumnsType } from "antd";
-import React, { useEffect, useState } from "react";
+import { Form, Input, Select, Table, TableColumnsType } from "antd";
+import { get } from "lodash";
+import React, { useEffect } from "react";
 import { formatNumber } from "../../util/app";
 import InputNumberAlign from "../InputNumberAlign";
-import dataSource from "./products.json";
-import { get } from "lodash";
 import { useOrder } from "./Order.context";
-type propsType = {};
-export interface Variant {
-  _id: string;
-  variantSearch: Array<string>;
-  productId: string;
-  isDefault: boolean;
-  unitId: UnitID;
-  exchangeValue: number;
-  barcode: string;
-  cost: number;
-  price: number;
-  status: string;
-  createdAt: Date;
-  updatedAt: Date;
-  codeSequence: number;
-  variantCode: string;
-}
 
-export interface UnitID {
-  description: string;
-  status: string;
-  _id: string;
-  name: string;
-  branchId: number;
-  createdAt: Date;
-  updatedAt: Date;
-  __v: number;
-  id: string;
-}
-const nameField = "products"
-// dataSource.length = 13;
-export default function TableContent(props: propsType): React.JSX.Element {
-  const [data, setData] = useState<typeof dataSource>([]);
-  const {formOrder:form}=useOrder()
-  useEffect(() => {
-    setTimeout(() => {
-      setData(dataSource);
-    }, 1000);
-  }, []);
+const nameField = "products";
+export default function TableContent(): React.JSX.Element {
+  const { formOrder: form, seletedProduct:data } = useOrder();
 
   return (
     <>
       <Form.List name={"products"} initialValue={[]}>
         {() => {
-          const column: TableColumnsType<(typeof dataSource)[number]> = [
+          const column: TableColumnsType<(ProductBase)> = [
             {
               title: "",
               width: 40,
+            colSpan:0,
               dataIndex: "_id",
               render: (id, r, i) => {
+                form?.setFieldValue([nameField, i, "_id"], id);
 
-                form?.setFieldValue([nameField,i, "_id"], id);
-
-                return ''
+                return "";
               },
             },
             {
               title: "Tên thuốc",
+              colSpan:2,
               dataIndex: "name",
               key: "name",
               ellipsis: true,
-              render:(name,r,i)=>{
-                form?.setFieldValue([nameField,i, "name"], name);
-                form?.setFieldValue([nameField,i, "productId"], r._id);
-                return name
-              }
+              render: (name, r, i) => {
+                form?.setFieldValue([nameField, i, "name"], name);
+                form?.setFieldValue([nameField, i, "productId"], r._id);
+                return name;
+              },
             },
 
             {
               title: "Đơn giá",
-              width: 100,
+              width: 170,
               dataIndex: "productVariants",
               key: "unitPrice",
               align: "end",
-
               render: (record: Variant[], r, i) => {
-                    const price = record.find(({ isDefault }) => isDefault)?.price;
-                    form?.setFieldValue([nameField,i, "unitPrice"], price);
-                return formatNumber(price);
+                return (
+                  <Form.Item
+                    noStyle
+                    shouldUpdate={(r, p) => {
+                      return (
+                        get(r, [nameField, i, "variantId"]) !==
+                        get(p, [nameField, i, "variantId"])
+                      );
+                    }}
+                  >
+                    {() => {
+                    const variantId = form?.getFieldValue([ nameField, i, "variantId", ]);
+                  const { price } = r.productVariants.find(({ isDefault: e, _id }) => variantId ? String(_id) === String(variantId) : e) ?? { price: 0 };
+
+                  form?.setFieldValue([nameField, i, "unitPrice"], price);
+
+                      return (
+                        <Form.Item noStyle>
+                          <Input styles={{
+                            input:{textAlign:'end'}
+                          }} readOnly value={formatNumber(price)} variant="borderless" />
+                        </Form.Item>
+                      );
+                    }}
+                  </Form.Item>
+                );
               },
             },
             {
               title: "Số lượng",
               key: "quantity",
-              dataIndex:'quantity',
+              dataIndex: "quantity",
               align: "center",
               width: 160,
-              render: (v,r,i) => {//
-                const variantDefaut = r.productVariants.find(({ isDefault:e }) => e);
+              render: (v, r, i) => {
+                const variantId = form?.getFieldValue([
+                  nameField,
+                  i,
+                  "variantId",
+                ]);
 
-                    form?.setFieldValue([nameField,i, "quantity"], v??1);
+                const { exchangeValue } = r.productVariants.find(
+                  ({ isDefault: e, _id }) =>
+                    variantId ? String(_id) === String(variantId) : e
+                ) ?? { exchangeValue: 1 };
+
+                form?.setFieldValue([nameField, i, "quantity"], (v ?? 1)*exchangeValue);
 
                 return (
-                    <InputNumberAlign
-                        onChange={(value)=>{
-                            form?.setFieldValue([nameField,i, "quantity"], value??1);
-                        }}
-                        style={{ width:'100%'}}
-                        min={0}
-                        defaultValue={v??1}
-                        formatter={formatNumber}
+                  <InputNumberAlign
+                    onChange={(value) => {
+                      form?.setFieldValue(
+                        [nameField, i, "quantity"],
+                        (value ?? 1) * exchangeValue
+                      );
+                    }}
+                    style={{ width: "100%" }}
+                    min={0}
+                    defaultValue={(v ?? 1) / exchangeValue}
+                    parser={(val) => {
+                      return (
+                        Number(String(val).replace(/[.,]/gi, "")) *
+                        exchangeValue
+                      );
+                    }}
+                    formatter={(v) => {
+                      return formatNumber(v);
+                    }}
                   />
                 );
               },
@@ -117,56 +124,75 @@ export default function TableContent(props: propsType): React.JSX.Element {
               key: "variant",
               width: 170,
               align: "left",
-              render: (record: Variant[],r,i) => {
+              render: (record: Variant[], r, i) => {
                 const variants = record.map(
-                  ({ unitId: { _id: value, name: label }, isDefault }) => ({
+                  ({ _id:value, unitId: { name: label }, isDefault }) => ({
                     value,
                     label,
                     isDefault,
                   })
                 );
-                const variantDefaut = variants.find(({ isDefault:e }) => e);
-                
-                const MultiVariant = ({defaultValue}:{defaultValue?:any}) => {
-                    useEffect(()=>{
-                        form?.setFieldValue([nameField,i, "variantId"], defaultValue);
-                    },[])
+                const variantDefaut = variants.find(({ isDefault: e }) => e);
+
+                const MultiVariant = ({
+                  defaultValue,
+                }: {
+                  defaultValue?: any;
+                }) => {
+                  useEffect(() => {
+                    form?.setFieldValue(
+                      [nameField, i, "variantId"],
+                      defaultValue
+                    );
+                  }, []);
                   return (
                     <Select
+                    style={{width:'100%'}}
+                    variant="filled"
                       defaultValue={defaultValue}
-                      onSelect={(value)=>{
-                        form?.setFieldValue([nameField,i, "variantId"], value);
+                      onSelect={(value) => {
+                        form?.setFieldValue([nameField, i, "variantId"], value);
                       }}
                       options={variants}
                     />
                   );
                 };
                 if (record.length > 1) {
-                    return <MultiVariant defaultValue={variantDefaut?.value}/>;
-                }else{
-                    form?.setFieldValue([nameField,i, "variantId"], variantDefaut?.value);
-                    return variantDefaut?.label;
+                  return <MultiVariant defaultValue={variantDefaut?.value} />;
+                } else {
+                  form?.setFieldValue(
+                    [nameField, i, "variantId"],
+                    variantDefaut?.value
+                  );
+                  return <div style={{paddingInline:10}}>{variantDefaut?.label}</div>;
                 }
               },
             },
             {
-                title: 'Thành tiền',
-                dataIndex: 'totalAmount',
-                render:(value,r,i)=>{
-                    return <Form.Item noStyle shouldUpdate={(record,preRecord)=>get(record,[nameField,i,'quantity'])!==get(preRecord,[nameField,i,'quantity'])}>
-                        {
-                            ({setFieldValue,getFieldValue})=>{
-                                const getQuantity = getFieldValue([nameField,i,'quantity'])
-                                const getPrice = getFieldValue([nameField,i,'unitPrice'])
-                                const totalAmount = getQuantity * getPrice;
-                                setFieldValue([nameField,i,'totalAmount'],totalAmount)
-                                return formatNumber(totalAmount)
-                            }
-                        }
-                    </Form.Item> 
-                }
-
-            }
+              title: "Thành tiền",
+              dataIndex: "totalAmount",
+              width: 180,
+              render: (value, r, i) => {
+                return (
+                  <Form.Item
+                    noStyle
+                    shouldUpdate={(record, preRecord) =>
+                      get(record, [nameField, i, "quantity"]) !==
+                      get(preRecord, [nameField, i, "quantity"]) ||
+                      get(record, [nameField, i, "unitPrice"]) !==
+                      get(preRecord, [nameField, i, "unitPrice"])
+                    }
+                  >
+                    {({ setFieldValue, getFieldValue }) => {
+                      const {quantity,unitPrice} = getFieldValue([nameField,i]);
+                      const totalAmount = quantity * unitPrice;
+                      setFieldValue([nameField, i, "totalAmount"], totalAmount);
+                      return formatNumber(totalAmount);
+                    }}
+                  </Form.Item>
+                );
+              },
+            },
           ];
 
           return (
@@ -174,16 +200,13 @@ export default function TableContent(props: propsType): React.JSX.Element {
               rowKey={"_id"}
               columns={column}
               dataSource={data}
-              scroll={{x:'auto' }}
+              scroll={{ x: "auto" }}
               pagination={false}
               bordered
-
             />
           );
         }}
       </Form.List>
-
-      <Button htmlType="submit">Submit</Button>
     </>
   );
 }

@@ -1,7 +1,6 @@
 import React from "react";
 import HeaderOrder from "./HeaderOrder";
 import TableContent from "./TableContent";
-type propsType = {};
 const stypeDiv: React.CSSProperties = {
   display: "grid",
   gridTemplateRows: "max-content 1fr",
@@ -17,7 +16,7 @@ const stypeDiv: React.CSSProperties = {
   position: "relative",
   maxHeight:'100%'
 };
-export default function TableProducts(props: propsType): React.JSX.Element {
+export default function TableBody(): React.JSX.Element {
   return (
       <div style={stypeDiv}>
         <HeaderOrder />
