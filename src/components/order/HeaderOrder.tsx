@@ -7,6 +7,7 @@ import { cloneDeep } from 'lodash';
 import { formatNumber } from '../../util/app';
 import request from '../../util/request';
 import notFound from '../../assets/not-found.svg'
+import { useTable } from './TableBody';
 
 const stypeDiv:React.CSSProperties = {
     flexGrow: 1,
@@ -21,6 +22,7 @@ const stypeDiv:React.CSSProperties = {
 }
 export default function HeaderOrder() : React.JSX.Element {
     const { seletedProduct,setSeletedProduct,setProducts,products } = useOrder();
+    const { add } = useTable()
     const [loading,setLoading] = useState(true)
     const [fastTooltip,setFastTooltip] = useState(false)
     const refInputSearch = useRef<InputRef>(null);
@@ -62,6 +64,16 @@ export default function HeaderOrder() : React.JSX.Element {
         <Col flex={1} style={{ width: "100%", maxWidth: 500 }}>
         <AutoComplete style={{ width: "100%" }} 
             onSelect={(id,{data})=>{
+                const variant = data.variants.find(({variantIsDefault:e})=>e)
+                add({
+                    totalAmount:0,
+                    _id:id,
+                    name:data.name,
+                    productId:data._id,
+                    quantity:1,
+                    unitPrice:variant?.price??0,
+                    variantId:String(variant?._id),
+                })
                 setSeletedProduct((old)=>{
                     return old.concat(data);
                 })

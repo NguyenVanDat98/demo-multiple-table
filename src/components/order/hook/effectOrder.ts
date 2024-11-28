@@ -24,6 +24,8 @@ export const useEffectOrder = () => {
                 0
             );
             form?.setFieldValue("totalAmount", totalAmount);
+        }else {
+            form?.setFieldValue("totalAmount", 0);
         }
     }, [products, form]);
     useEffect(() => {

@@ -92,7 +92,7 @@ const DiscountComponent = memo(function () {
       <Form.Item {...itemProps}  label={"Giá trị giảm"} name={"discountValue"}>
         <InputNumber style={{width:'100%'}} readOnly variant="filled" formatter={formatNumber} />
       </Form.Item>
-      <Form.Item {...itemProps}  label={"Giảm giá"} name={"discount"}>
+      <Form.Item {...itemProps}  label={"Giảm giá"} name={"discount"} initialValue={0}>
         <InputNumber
           addonAfter={
             <AddonAfter/>

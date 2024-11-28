@@ -1,6 +1,8 @@
-import React from "react";
+import React, { createContext, useContext } from "react";
 import HeaderOrder from "./HeaderOrder";
 import TableContent from "./TableContent";
+import { Form } from "antd";
+import { remove } from "lodash";
 const stypeDiv: React.CSSProperties = {
   display: "grid",
   gridTemplateRows: "max-content 1fr",
@@ -16,11 +18,28 @@ const stypeDiv: React.CSSProperties = {
   position: "relative",
   maxHeight:'100%'
 };
+
+const TableProvider = createContext({
+  add:(_props?:Product)=>{},
+  remove:(_idx:number[]|number)=>{}
+})
+// eslint-disable-next-line react-refresh/only-export-components
+export const useTable = ()=>useContext(TableProvider)
+
 export default function TableBody(): React.JSX.Element {
   return (
       <div style={stypeDiv}>
-        <HeaderOrder />
-        <TableContent />
+         <Form.List name={"products"} initialValue={[]} >
+          {
+            (_f,{add,remove})=>{
+              return <TableProvider.Provider value={{add,remove}}>
+                <HeaderOrder />
+                <TableContent />
+              </TableProvider.Provider>
+            }
+          }
+
+         </Form.List>
       </div>
   );
 }
