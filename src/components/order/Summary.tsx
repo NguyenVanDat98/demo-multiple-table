@@ -7,7 +7,7 @@ import {
     Input,
     InputNumber,
     Segmented,
-    Tooltip
+    Tooltip,
 } from "antd";
 import React, { memo, PropsWithChildren, useState } from "react";
 import { formatNumber } from "../../util/app";
@@ -35,7 +35,8 @@ const itemProps:FormItemProps={
 export default memo(function Summary(): React.JSX.Element {
  const {
     totalAmount,
-    discountValue
+    discountValue,
+    refButton,
 } = useEffectOrder();
 
   return (
@@ -46,7 +47,7 @@ export default memo(function Summary(): React.JSX.Element {
 
       <Divider plain variant="solid" />
 
-      <Form.Item {...itemProps}  label={"Tổng tiền"} name={"totalAmount"} initialValue={0}>
+      <Form.Item {...itemProps} style={{marginBottom:4}}  label={"Tổng tiền"} name={"totalAmount"} initialValue={0}>
         <InputNumber
           readOnly
           style={{ width: "100%" }}
@@ -54,9 +55,12 @@ export default memo(function Summary(): React.JSX.Element {
           variant={"filled"}
         />
       </Form.Item>
+      <Divider plain variant="solid" />
+
       <DiscountComponent />
+      <Divider plain variant="solid" />
     <DetailTotalPayment title={ totalAmount?`Tổng tiền (${formatNumber(totalAmount)}) - Giá trị giảm (${formatNumber(discountValue)})`:'' }>
-        <Form.Item {...itemProps}  label={"Thành tiền"} name={"totalPayment"}>
+        <Form.Item {...itemProps} style={{marginBottom:4}}  label={"Thành tiền"} name={"totalPayment"}>
             <InputNumber
             readOnly
             style={{ width: "100%" }}
@@ -66,12 +70,12 @@ export default memo(function Summary(): React.JSX.Element {
 
         </Form.Item>
     </DetailTotalPayment>
-
-      <Button type="primary" htmlType="submit">Submit</Button>
+    <Divider plain variant="solid" />
+      <Button ref={refButton} type="primary" htmlType="submit">Submit (Enter Press P)</Button>
     </div>
   );
   function DetailTotalPayment({children,...props}:PropsWithChildren<{title:any}>){
-    return <Tooltip trigger={'focus'} mouseEnterDelay={1.4} title={props?.title}>{children}</Tooltip>
+    return <Tooltip overlayInnerStyle={{width:'max-content'}} trigger={'focus'} mouseEnterDelay={1.4} title={props?.title}>{children}</Tooltip>
   }
 });
 
@@ -116,7 +120,7 @@ const DiscountComponent = memo(function () {
           variant={"outlined"}
         />
       </Form.Item>
-      <Form.Item {...itemProps}  label={"Giá trị giảm"} name={"discountValue"}>
+      <Form.Item {...itemProps} style={{marginBottom:4}} label={"Giá trị giảm"} name={"discountValue"}>
         <InputNumber style={{width:'100%'}} readOnly variant="filled" formatter={formatNumber}  addonAfter={'VNĐ'}/>
       </Form.Item>
     </ConfigProvider>

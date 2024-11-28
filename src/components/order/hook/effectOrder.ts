@@ -1,5 +1,5 @@
 import { Form } from "antd";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useOrder } from "../Order.context";
 export interface Product {
     _id: string;
@@ -17,6 +17,8 @@ export const useEffectOrder = () => {
     const discount = Form.useWatch("discount", form);
     const discountType = Form.useWatch("discountType", form);
     const discountValue = Form.useWatch("discountValue", form);
+    const refButton = useRef<HTMLButtonElement | HTMLAnchorElement>(null)
+
     useEffect(() => {
         if (products?.length) {
             const totalAmount = products.reduce(
@@ -46,8 +48,20 @@ export const useEffectOrder = () => {
 
         form?.setFieldValue("totalPayment", totalAmount - discountValue );
     }, [discountValue, totalAmount, form]);
+    useEffect(()=>{
+        const handleKeyUp = (event:KeyboardEvent) => {
+            if (event.key === 'p') {
+                refButton.current?.click();
+            }
+          };
+        window.addEventListener('keydown',handleKeyUp)
+        return ()=>{
+            window.removeEventListener('keydown', handleKeyUp);
+        }
+     },[])
     return {
         totalAmount,
         discountValue,
+        refButton
     }
 }
