@@ -29,3 +29,8 @@
 .no-show{
   display: none;
 }
+
+.ant-tabs-nav-list .ant-tabs-tab-active{
+  background-color: "#4096ff" !important;
+  color: "white"!important;
+}

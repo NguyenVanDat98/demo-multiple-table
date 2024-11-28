@@ -50,7 +50,7 @@ export const useEffectOrder = () => {
     }, [discountValue, totalAmount, form]);
     useEffect(()=>{
         const handleKeyUp = (event:KeyboardEvent) => {
-            if (event.key === 'p') {
+            if (event.key === '`') {
                 refButton.current?.click();
             }
           };

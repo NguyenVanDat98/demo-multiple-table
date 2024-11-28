@@ -63,6 +63,7 @@ export default function HeaderOrder() : React.JSX.Element {
       <Row align={'middle'} justify={'space-between'} style={{ width: "calc(100% + 20px)", ...stypeDiv }}>
         <Col flex={1} style={{ width: "100%", maxWidth: 600 }}>
         <AutoComplete style={{ width: "100%" }} 
+            
             onSelect={(id,{data})=>{
                 const variant = data.variants.find(({variantIsDefault:e})=>e)
                 add({
@@ -85,7 +86,7 @@ export default function HeaderOrder() : React.JSX.Element {
             }
             >
                 <div>
-                    <Input  onChange={onchange} suffix={ loading ? <Spin  size='small' indicator={<LoadingOutlined spin/>}/>:<SearchOutlined />} ref={refInputSearch} placeholder='Enter Press "/"' size="large" style={{ width: "100%" }} />
+                    <Input  onChange={onchange} suffix={ loading ? <Spin  size='default' indicator={<LoadingOutlined spin/>}/>:<SearchOutlined />} ref={refInputSearch} placeholder='Enter Press "/"' size="large" style={{ width: "100%" }} />
                 </div>
         </AutoComplete>
         </Col>

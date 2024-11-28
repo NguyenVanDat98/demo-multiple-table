@@ -71,7 +71,11 @@ export default memo(function Summary(): React.JSX.Element {
         </Form.Item>
     </DetailTotalPayment>
     <Divider plain variant="solid" />
-      <Button ref={refButton} type="primary" htmlType="submit">Submit (Enter Press P)</Button>
+      <Button ref={refButton} style={{
+        marginTop:'auto',
+        height:70,
+        fontSize:18
+      }} type="primary" htmlType="submit">Submit (Enter Press P)</Button>
     </div>
   );
   function DetailTotalPayment({children,...props}:PropsWithChildren<{title:any}>){

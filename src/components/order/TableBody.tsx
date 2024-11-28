@@ -2,10 +2,10 @@ import React, { createContext, useContext } from "react";
 import HeaderOrder from "./HeaderOrder";
 import TableContent from "./TableContent";
 import { Form } from "antd";
-import { remove } from "lodash";
+import TabsOrder from "./TabsOrder";
 const stypeDiv: React.CSSProperties = {
   display: "grid",
-  gridTemplateRows: "max-content 1fr",
+  gridTemplateRows: "max-content max-content 1fr",
   flexGrow: 1,
   flexWrap: "wrap",
   padding: 10,
@@ -29,6 +29,7 @@ export const useTable = ()=>useContext(TableProvider)
 export default function TableBody(): React.JSX.Element {
   return (
       <div style={stypeDiv}>
+        <TabsOrder/>
          <Form.List name={"products"} initialValue={[]} >
           {
             (_f,{add,remove})=>{
