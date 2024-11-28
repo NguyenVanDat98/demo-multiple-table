@@ -1,14 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { SearchOutlined } from '@ant-design/icons';
-import { AutoComplete, Card, Col, Divider, Input, InputRef, Row } from 'antd';
-import React, { useEffect, useRef } from 'react';
+import { LoadingOutlined, SearchOutlined } from '@ant-design/icons';
+import { AutoComplete, Card, Col, Divider, Image, Input, InputRef, notification, Row, Spin, Tooltip, Typography } from 'antd';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useOrder } from './Order.context';
-import datasource from './products.json'
 import { cloneDeep } from 'lodash';
 import { formatNumber } from '../../util/app';
-type propsType = {
+import request from '../../util/request';
+import notFound from '../../assets/not-found.svg'
 
-}
 const stypeDiv:React.CSSProperties = {
     flexGrow: 1,
     backgroundColor:'#333',
@@ -20,10 +19,15 @@ const stypeDiv:React.CSSProperties = {
     zIndex:10
 
 }
-export default function HeaderOrder(props:propsType) : React.JSX.Element {
-    const { setSeletedProduct}=useOrder()
-    const refInputSearch = useRef<InputRef>(null)
+export default function HeaderOrder() : React.JSX.Element {
+    const { seletedProduct,setSeletedProduct,setProducts,products } = useOrder();
+    const [loading,setLoading] = useState(true)
+    const [fastTooltip,setFastTooltip] = useState(false)
+    const refInputSearch = useRef<InputRef>(null);
+    const reftime = useRef<number>(0);
     useEffect(() => {
+        request.searchProducts({keyword: ''}).then(setProducts).catch((error)=>notification.error({message:error?.message})).finally(()=>setLoading(false));
+      
         const handleKeyDown = (event:KeyboardEvent) => {
           if (event.key === '/') {
             refInputSearch.current?.focus()
@@ -35,7 +39,20 @@ export default function HeaderOrder(props:propsType) : React.JSX.Element {
         return () => {
           window.removeEventListener('keydown', handleKeyDown);
         };
-      },[]);
+      },[setProducts]);
+    const onchange :React.ChangeEventHandler<HTMLInputElement>= useCallback(async(value)=>{
+        setLoading(true);
+        if(reftime.current){
+            clearTimeout(reftime.current)
+        }
+        reftime.current = setTimeout(async() => {
+            const data = await request.searchProducts({keyword: value?.target?.value});
+            setProducts(data);
+            setLoading(false)
+        }, 800);
+
+      
+    },[setProducts,setLoading])
     return (
       <Row align={'middle'} justify={'space-between'} style={{ width: "calc(100% + 20px)", ...stypeDiv }}>
         <Col flex={1} style={{ width: "100%", maxWidth: 500 }}>
@@ -45,42 +62,58 @@ export default function HeaderOrder(props:propsType) : React.JSX.Element {
                     return old.concat(data);
                 })
             }}
-            listHeight={400}
+            listHeight={500}
+            notFoundContent={<div style={{display:'grid',placeContent:'center',placeItems:'center'}}><Image src={notFound} preview={false} height={100}/></div>}
             options={
-                datasource.map((props:any)=>{
-                    const clone =cloneDeep(props) as ProductBase
-                    const variant = clone.productVariants.find(({isDefault:e})=>e);
-
-                    return {
-                        value: props._id,
-                        label: <Card title={clone.name} size='small'>
-                            <Row style={{width:'100%'}}>
-                                <Col flex={1}>
-                                    <LabelAndValue value={formatNumber(variant?.price??0)} label='Giá'/>
-                                    <LabelAndValue value={variant?.unitId.name??0} label='Đơn vị'/>
-                                </Col>
-                                <Col style={{width:70}}>{}</Col>
-                            </Row>
-                      
-                        </Card>,
-                        data: clone
-                    }
-                })
+                products.map(renderOption)
             }
             >
                 <div>
-                    <Input suffix={<SearchOutlined />} ref={refInputSearch} placeholder='Enter Press "/"' size="large" style={{ width: "100%" }} />
+                    <Input  onChange={onchange} suffix={ loading ? <Spin  size='small' indicator={<LoadingOutlined spin/>}/>:<SearchOutlined />} ref={refInputSearch} placeholder='Enter Press "/"' size="large" style={{ width: "100%" }} />
                 </div>
         </AutoComplete>
         </Col>
       </Row>
     );
-    type Props ={label?:string,value:any}
+    type Props ={label?:string,value:any,strong?:boolean,fontsize?:number,disabled?:boolean}
+
+    function renderOption (props:any){
+        const clone = cloneDeep(props) as ProductBase
+        
+        const variant = clone?.variants.find(({variantIsDefault})=>variantIsDefault);
+        const disabled = seletedProduct.some(({_id})=>String(_id)===String(clone._id));
+        return {
+            value: clone._id,
+            disabled,
+            label: <Tooltip  title={clone.productDetail.element} arrow placement='right' afterOpenChange={(e)=>{
+                if(e){
+                    setFastTooltip(true)
+                    clearTimeout(reftime.current);
+                }else{
+                    reftime.current = setTimeout(() => {
+                        setFastTooltip(false)
+                    }, 3000);
+                }
+            }} mouseEnterDelay={fastTooltip?0:1.4} >
+                <Card style={{background:disabled ?'#e0e0e0' :'',color: disabled?'rgba(0, 0, 0, 0.25)':''}} title={clone.name} size='small' >
+                <Row style={{width:'100%'}}>
+                    <Col flex={1}>
+                        <LabelAndValue disabled={disabled} value={`[ ${clone.codeBySupplier} ]`} label='Mã'/>
+                        <LabelAndValue disabled={disabled} value={formatNumber(variant?.price??0)} strong fontsize={16} label='Giá'/>
+                        <LabelAndValue disabled={disabled} value={variant?.unit.name??0} label='Đơn vị'/>
+                    </Col>
+                    <Col style={{width:70,height:'100%',marginBlock:-10 }}>{<Image height={'100%'} src={clone.images[0]} preview={false} loading='lazy'/>}</Col>
+                </Row>
+            </Card>
+            </Tooltip>,
+            data: clone
+        } 
+    }
     function LabelAndValue(props:Props){
             return <Row style={{width:'100%'}}>
                 {props.label&& <Col span={4}>{props.label}</Col>}
                 <Col><Divider plain orientation='center' variant='solid' type='vertical'/></Col>
-                <Col flex={1}>{props.value}</Col>
+                <Col flex={1}><Typography.Text disabled={props.disabled} strong={props.strong} style={{fontSize:props.fontsize}}>{props.value}</Typography.Text></Col>
             </Row>
     }
 }

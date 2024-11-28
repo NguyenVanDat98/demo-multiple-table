@@ -1,6 +1,6 @@
 import { Button, Modal, Select } from "antd";
 import type { ModalProps } from "antd";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import "./App.css";
 import FormService from "./components/FormService";
 import HeadModal from "./components/HeadModal";
@@ -8,6 +8,7 @@ import Whitebox from "./components/Whitebox";
 import { Route, Routes } from "react-router-dom";
 import Layout from "./components/Layout";
 import OrderScreen from "./components/order/OrderScreen";
+import { setupAxios } from "./util/request";
 
 type ModalStyles = ModalProps['styles']
 const rootStype: ModalStyles = {
@@ -88,7 +89,9 @@ function App() {
     </>
   );
 }
-App.Router = function(){
+
+App.Router = function Router(){
+  setupAxios()
   return <Routes >
       <Route path="/" element={<Layout/>}>
         <Route path="modal" element={<App/>}/>

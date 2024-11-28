@@ -5,6 +5,7 @@ type propsType = {};
 export default function Layout(
   props: PropsWithChildren<propsType>
 ): React.JSX.Element {
+
   return (
     <div
       style={{

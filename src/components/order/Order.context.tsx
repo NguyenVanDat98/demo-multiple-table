@@ -7,22 +7,30 @@ import React, { PropsWithChildren, useContext, useState } from "react";
 export const OrderContext = React.createContext<{
   formOrder?: FormInstance<any>;
   setSeletedProduct: React.Dispatch<React.SetStateAction<ProductBase[]>>;
+  setProducts: React.Dispatch<React.SetStateAction<ProductBase[]>>;
   seletedProduct: ProductBase[];
+  products: ProductBase[];
 }>({
   setSeletedProduct: () => {},
+  setProducts: () => {},
   seletedProduct: [],
+  products:[],
 });
 export const useOrder = () => useContext(OrderContext);
 
 export const OrderProvider = (props: PropsWithChildren) => {
   const [formOrder] = Form.useForm();
   const [seletedProduct, setSeletedProduct] = useState<ProductBase[]>([]);
+  const [products,setProducts]= useState<ProductBase[]>([]);  
+
   return (
     <OrderContext.Provider
       value={{
         formOrder,
         seletedProduct,
         setSeletedProduct,
+        products,
+        setProducts
       }}
     >
       <Form

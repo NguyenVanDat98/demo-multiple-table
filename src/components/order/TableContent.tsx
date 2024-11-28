@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Form, Input, Select, Table, TableColumnsType } from "antd";
+import { Form, Image, Input, Select, Table, TableColumnsType } from "antd";
 import { get } from "lodash";
 import React, { useEffect } from "react";
 import { formatNumber } from "../../util/app";
@@ -23,7 +23,9 @@ export default function TableContent(): React.JSX.Element {
               render: (id, r, i) => {
                 form?.setFieldValue([nameField, i, "_id"], id);
 
-                return "";
+                return <Image.PreviewGroup items={r.images}>
+                    <Image width={70} height={70} src={r.images[0]} />
+                </Image.PreviewGroup>;
               },
             },
             {
@@ -35,14 +37,14 @@ export default function TableContent(): React.JSX.Element {
               render: (name, r, i) => {
                 form?.setFieldValue([nameField, i, "name"], name);
                 form?.setFieldValue([nameField, i, "productId"], r._id);
-                return name;
+                return `[ ${r.codeBySupplier} ] - ${name}`;
               },
             },
 
             {
               title: "Đơn giá",
               width: 170,
-              dataIndex: "productVariants",
+              dataIndex: "variants",
               key: "unitPrice",
               align: "end",
               render: (record: Variant[], r, i) => {
@@ -58,7 +60,7 @@ export default function TableContent(): React.JSX.Element {
                   >
                     {() => {
                     const variantId = form?.getFieldValue([ nameField, i, "variantId", ]);
-                  const { price } = r.productVariants.find(({ isDefault: e, _id }) => variantId ? String(_id) === String(variantId) : e) ?? { price: 0 };
+                  const { price } = r.variants.find(({ variantIsDefault: e, _id }) => variantId ? String(_id) === String(variantId) : e) ?? { price: 0 };
 
                   form?.setFieldValue([nameField, i, "unitPrice"], price);
 
@@ -87,7 +89,7 @@ export default function TableContent(): React.JSX.Element {
                   "variantId",
                 ]);
 
-                const { exchangeValue } = r.productVariants.find(
+                const { exchangeValue } = r.variants.find(
                   ({ isDefault: e, _id }) =>
                     variantId ? String(_id) === String(variantId) : e
                 ) ?? { exchangeValue: 1 };
@@ -120,13 +122,13 @@ export default function TableContent(): React.JSX.Element {
             },
             {
               title: "Đơn vị",
-              dataIndex: "productVariants",
+              dataIndex: "variants",
               key: "variant",
               width: 170,
               align: "left",
               render: (record: Variant[], r, i) => {
                 const variants = record.map(
-                  ({ _id:value, unitId: { name: label }, isDefault }) => ({
+                  ({ _id:value, unit: { name: label }, variantIsDefault:isDefault }) => ({
                     value,
                     label,
                     isDefault,
