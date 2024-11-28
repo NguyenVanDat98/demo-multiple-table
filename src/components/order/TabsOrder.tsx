@@ -57,7 +57,7 @@ export default function TabsOrder() : React.JSX.Element {
       };
     const onEdit = (targetKey: TargetKey, action: 'add' | 'remove') => {
         if (action === 'add') {
-        //   add();
+          add();
         } else {
           remove(targetKey);
         }
@@ -70,7 +70,7 @@ export default function TabsOrder() : React.JSX.Element {
                     style={{
                         width: '100%',
                     }}
-                    
+
                 tabBarStyle={{marginBottom:4}}
                 onChange={onChange}
                 activeKey={activeKey}
