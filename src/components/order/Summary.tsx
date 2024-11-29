@@ -19,7 +19,7 @@ const stypeDiv: React.CSSProperties = {
   flexBasis: 1,
   width: 400,
   flexDirection: "column",
-  minWidth: 400,
+  minWidth: 300,
   // flexWrap: 'wrap',
   padding: 10,
   border: "1px solid #333",

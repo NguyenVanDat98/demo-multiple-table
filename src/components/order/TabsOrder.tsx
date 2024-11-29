@@ -1,6 +1,4 @@
-import { AppstoreAddOutlined, DeleteFilled, PlusOutlined } from '@ant-design/icons';
-import { Button, Segmented, Tabs } from 'antd';
-import { SegmentedOptions } from 'antd/es/segmented';
+import { Button, Tabs } from 'antd';
 import React, { useRef, useState } from 'react';
 
 const stypeDiv: React.CSSProperties = {
@@ -14,7 +12,7 @@ const stypeDiv: React.CSSProperties = {
     // border: "0.1px solid #333",
     // backgroundColor: "#ffff",
     // paddingTop: 0,
-    // overflowX: "hidden",
+    overflowX: "auto",
     // overflowY: "auto",
     // position: "relative",
     // maxHeight:'100%'
@@ -64,21 +62,29 @@ export default function TabsOrder() : React.JSX.Element {
       };
     
     return (
-        <div style={stypeDiv} >
-            <></>
-            <Tabs hideAdd
-                    style={{
-                        width: '100%',
-                    }}
-
-                tabBarStyle={{marginBottom:4}}
-                onChange={onChange}
-                activeKey={activeKey}
-                tabBarExtraContent={<Button onClick={()=>{add()}} style={{marginLeft:10}} type='primary' icon={<PlusOutlined />}></Button>}
-                type="editable-card"
-                onEdit={onEdit}
-                items={items}
-            />
-        </div>
-    )
+        <Tabs
+          addIcon={
+            <Button
+                block
+                style={{
+                    marginInline:-10,
+                }}
+              type="primary"
+            >
+              Đơn hàng mới
+            </Button>
+          }
+          style={{
+            width: "100%",
+            ...stypeDiv
+          }}
+          tabBarStyle={{ marginBottom: 4 }}
+          onChange={onChange}
+          activeKey={activeKey}
+          // tabBarExtraContent={<Button onClick={()=>{add()}} style={{marginLeft:10}} type='primary' icon={<PlusOutlined />}>Đơn hàng mới</Button>}
+          type="editable-card"
+          onEdit={onEdit}
+          items={items}
+        />
+    );
 }

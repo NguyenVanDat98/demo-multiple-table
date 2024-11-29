@@ -45,7 +45,7 @@ export default function TableContent(): React.JSX.Element {
       colSpan: 2,
       dataIndex: "name",
       key: "name",
-      ellipsis: true,
+      minWidth:300,
       render: (name, r, i) => {
         form?.setFieldValue([nameField, i, "name"], name);
         form?.setFieldValue([nameField, i, "productId"], r._id);
@@ -55,7 +55,7 @@ export default function TableContent(): React.JSX.Element {
 
     {
       title: "Đơn giá",
-      width: 170,
+      width: 200,
       dataIndex: "variants",
       key: "unitPrice",
       align: "end",
@@ -237,6 +237,9 @@ export default function TableContent(): React.JSX.Element {
   return (
     <Table
       rowKey={"_id"}
+      style={{
+        width: "100%",
+      }}
       columns={column}
       dataSource={data}
       scroll={{ x: "auto" }}
