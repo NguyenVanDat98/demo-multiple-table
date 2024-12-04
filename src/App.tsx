@@ -9,6 +9,8 @@ import { Route, Routes } from "react-router-dom";
 import Layout from "./components/Layout";
 import OrderScreen from "./components/order/OrderScreen";
 import { setupAxios } from "./util/request";
+import { useAppDispatch } from './hook'
+import { rootAction } from "./redux/modal";
 
 type ModalStyles = ModalProps['styles']
 const rootStype: ModalStyles = {
@@ -37,10 +39,15 @@ const rootStype: ModalStyles = {
 function App() {
   const [count, setCount] = useState(false);
   const [isOpenWhitebox, setOpenWhitebox] = useState(false);
+  const dispatch = useAppDispatch()
 
   return (
     <>
-      <Button type="primary" onClick={() => setCount((e) => !e)}>
+      <Button type="primary" onClick={() => {
+        
+        setCount((e) => !e)
+        dispatch(rootAction.fetchServiceRequest())
+        }}>
         OpenModel
       </Button>
 
@@ -84,7 +91,7 @@ function App() {
         width={1400}
         styles={rootStype}
       >
-        <FormService />
+        <FormService  chooseed={['669e02927106f93a5a2ce455']} />
       </Modal>
     </>
   );

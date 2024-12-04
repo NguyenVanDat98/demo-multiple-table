@@ -1,12 +1,15 @@
 import { DeleteOutlined } from "@ant-design/icons";
-import { Button, Col, Input, Row, Select, Table, TableProps, Tag } from "antd";
+import { Button, Col, Input, Row, Select, Table, TableProps, Tag, Tooltip } from "antd";
 import ConfigProvider from "antd/es/config-provider";
 import { BaseOptionType } from "antd/es/select";
 import { debounce, deburr, defaultTo, get, set, uniq, uniqBy } from "lodash";
-import React, { memo, PropsWithChildren, useCallback, useState } from "react";
+import React, { memo, PropsWithChildren, useCallback, useEffect, useState } from "react";
 import services from "../assets/services.json";
-type propsType = {};
-type DataType = (typeof services)[number];
+import { useAppSelector } from "../hook";
+type propsType = {
+  chooseed?: string[]
+};
+export type DataType = (typeof services)[number];
 
 const categories = uniqBy(
   services.map(({ category }) => ({
@@ -39,7 +42,9 @@ const deburrSlug = (value: string) => {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let time: any;
 
-export default function FormService(props: propsType): React.JSX.Element {
+export default function FormService({chooseed}: propsType): React.JSX.Element {
+  const services = useAppSelector((state)=> state.root.service.data)
+  const serviceLoading = useAppSelector((state)=> state.root.service.loading)
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
 
   const [filterNotChoose, setFilterNotChoose] = useState<string | null>(null);
@@ -48,14 +53,24 @@ export default function FormService(props: propsType): React.JSX.Element {
   const [valueSearchNotChoose, setValueSearchNotChoose] = useState("");
   const [valueSearchChoose, setValueSearchChoose] = useState("");
 
-  const [servicesNotChoose, setServicesNotChoose] =
-    useState<typeof services>(services);
-  const [servicesChoose, setServicesChoose] = useState<typeof services>(services.filter(({_id})=>selectedRowKeys.includes(_id)));
+  const [servicesNotChoose, setServicesNotChoose] = useState<typeof services>(services);
+  const [servicesChoose, setServicesChoose] = useState<typeof services>(services);
 
+  useEffect(() => {
+    if(chooseed?.length){
+      setSelectedRowKeys(chooseed)
+      setServicesChoose(services.filter(({_id})=>chooseed.includes(_id)))
+    }
+    setServicesNotChoose(services)
+  
+    return () => {
+      
+    }
+  }, [chooseed,services]);
   const onSearch = useCallback(
     (
       setData: typeof setServicesNotChoose,
-      init: typeof services = [],
+      init: DataType[] = [],
       setValue: (value: string) => void
     ) => {
       return (value: string) => {
@@ -86,11 +101,11 @@ export default function FormService(props: propsType): React.JSX.Element {
         }
       };
     },
-    []
+    [services]
   );
   const onSearchChoose = useCallback(
     () => onSearch(setServicesChoose,services.filter(({_id})=>selectedRowKeys.includes(_id)) , setValueSearchChoose),
-    [onSearch,selectedRowKeys]
+    [onSearch,selectedRowKeys,services]
   );
   const onSearchNotChoose = useCallback(
     () => onSearch(setServicesNotChoose, services, setValueSearchNotChoose),
@@ -111,6 +126,7 @@ export default function FormService(props: propsType): React.JSX.Element {
       >
         <Col span={12} style={{ borderRight: "3px #333 solid" }}>
           <TableRender
+            loading={serviceLoading}
             dataSource={servicesNotChoose}
             filterData={({ category }) =>
               filterNotChoose ? category._id === filterNotChoose : true
@@ -144,7 +160,7 @@ export default function FormService(props: propsType): React.JSX.Element {
                 dataIndex: "name",
                 render: (name, record) => {
                   return (
-                    <div>{defaultTo(get(name, "vi"), get(name, "vi"))}</div>
+                    <Tooltip title={record._id} mouseEnterDelay={1.3}><div>{defaultTo(get(name, "vi"), get(name, "vi"))}</div></Tooltip>
                   );
                 },
               },
@@ -164,6 +180,7 @@ export default function FormService(props: propsType): React.JSX.Element {
         </Col>
         <Col span={12}>
           <TableRender
+            loading={serviceLoading}
             dataSource={servicesChoose}
             filterData={({ _id, category }) =>
               selectedRowKeys.includes(_id) &&
@@ -174,21 +191,15 @@ export default function FormService(props: propsType): React.JSX.Element {
                 title: () => {
                   const count = servicesChoose.filter(({ _id, category }) =>
                     selectedRowKeys.includes(_id) &&
-                    (filterChoose ? category._id === filterChoose : true)).length
+                    (filterChoose ? category._id === filterChoose : true))
                   return <Button
                   onClick={() => {
-                    setSelectedRowKeys(
-                      services
-                        .filter(({ _id, category }) =>
-                          filterChoose ? category._id !== filterChoose : false
-                        )
-                        .map(({ _id }) => _id)
-                    );
+                    setSelectedRowKeys(selectedRowKeys.filter(id=>!count.some(({_id})=>_id===id)));
                   }}
                   size="small"
                   danger
                 >
-                  Gỡ {Boolean(count) &&<Tag color="red" style={{marginInlineEnd:0,marginRight:-8,paddingInline:10,paddingBlock:1}}>{count}</Tag> }
+                  Gỡ {Boolean(count.length) &&<Tag color="red" style={{marginInlineEnd:0,marginRight:-8,paddingInline:10,paddingBlock:1}}>{count.length}</Tag> }
                 </Button>
                 },
                 colSpan: 1,
