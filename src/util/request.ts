@@ -23,7 +23,7 @@ export default {
                 limit:10,
             })
             return data.data as ProductBase[]
-        } catch (error) {
+        } catch (error:any) {
             notification.error( {
                 message: String(error?.message),
                 closable:true,

@@ -2,13 +2,22 @@ import { configureStore } from '@reduxjs/toolkit'
 import rootReducer from './redux/modal'
 import createSagaMiddleware from 'redux-saga'
 import rootSaga from './redux/rootSaga'
-
-
+import { persistStore, persistReducer } from 'redux-persist'
+import storage from 'redux-persist/lib/storage' 
+import { serviceReducer } from './redux/reducers'
+const persistConfig = {
+  key: 'root',
+  storage,
+}
+ 
+const persistedReducer = persistReducer(persistConfig, rootReducer)
 const sagaMiddleware = createSagaMiddleware()
 
 const store = configureStore({
   reducer: {
-    root : rootReducer.reducer
+    auth: persistedReducer,
+    root : rootReducer,
+    service: serviceReducer
   },
   middleware(get){
     return get({
@@ -17,6 +26,7 @@ const store = configureStore({
     }).concat(sagaMiddleware)
   }
 })
+const persistor = persistStore(store)
 sagaMiddleware.run(rootSaga)
 export default store
 

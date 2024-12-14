@@ -43,8 +43,7 @@ const deburrSlug = (value: string) => {
 let time: any;
 
 export default function FormService({chooseed}: propsType): React.JSX.Element {
-  const services = useAppSelector((state)=> state.root.service.data)
-  const serviceLoading = useAppSelector((state)=> state.root.service.loading)
+  const {data:services,loading:serviceLoading} = useAppSelector((state)=> state.root.service)
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
 
   const [filterNotChoose, setFilterNotChoose] = useState<string | null>(null);

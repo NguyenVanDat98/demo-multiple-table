@@ -15,7 +15,7 @@ Whitebox.M2 = forwardRef(function(props:Attributes,ref: React.ForwardedRef<HTMLD
         ref={ref} 
         className='whitebox' 
         style={{margin:20,...props.style}}> 
-            WhiteBox M2 {props.children && props.children} 
+            {props.children && props.children}
         </div>
 })
 
